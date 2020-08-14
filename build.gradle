@@ -1,0 +1,85 @@
+group 'sura'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://plugins.gradle.org/m2/"
+    }
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath("net.serenity-bdd:serenity-gradle-plugin:2.0.75")
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'idea'
+apply plugin: 'net.serenity-bdd.aggregator'
+
+ext{
+    serenityVersion = '2.0.39'
+    serenityCucumberVersion = '1.0.5'
+    cucumberVersion = '4.2.0'
+}
+
+configurations.all {
+    resolutionStrategy {
+        force "io.cucumber:cucumber-core:4.2.0"
+
+    }
+}
+
+dependencies {
+    compile             "org.slf4j:slf4j-simple:1.7.25"
+    compile             "net.serenity-bdd:serenity-core:$rootProject.ext.serenityVersion"
+    compile             "net.serenity-bdd:serenity-cucumber4:$rootProject.ext.serenityCucumberVersion"
+    compile             "io.cucumber:cucumber-core:$rootProject.ext.cucumberVersion"
+    compile             "io.cucumber:cucumber-junit:$rootProject.ext.cucumberVersion"
+    compile             group: 'net.serenity-bdd', name: 'serenity-rest-assured', version: '2.0.39'
+    compile             group: 'com.imalittletester', name: 'thewaiter', version: '1.0'
+    compile             group: 'net.serenity-bdd', name: 'serenity-gradle-plugin', version: '2.0.90'
+    compile             group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.11.0'
+    compileOnly         'org.projectlombok:lombok:1.18.12'
+    annotationProcessor 'org.projectlombok:lombok:1.18.12'
+
+}
+
+
+test {
+    maxParallelForks = Runtime.runtime.availableProcessors()
+}
+
+configurations {
+    cucumberRuntime.extendsFrom testRuntime
+}
+
+task cucumber() {
+    dependsOn assemble, compileTestJava
+    doLast {
+        javaexec {
+            main = "cucumber.api.cli.Main"
+            classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
+            args = ['--plugin', 'pretty', '--glue', 'com.sura.pruebascorevida.definitions', 'src/test/resources/features']
+        }
+    }
+}
+
+wrapper {
+    gradleVersion = '5.5'
+}
+
+sourceCompatibility = 1.8
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+javadoc.options.encoding = 'UTF-8'
+gradle.startParameter.continueOnFailure = true
+
